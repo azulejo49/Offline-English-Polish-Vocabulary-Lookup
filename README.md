@@ -1,6 +1,6 @@
-<div align="center">
-  <img src="badge.svg" width="340"/>
-</div>
+<p align="center">
+  <img src="./badge.svg" width="340" alt="Badge">
+</p>
 
 # A-Z Offline English–Polish Vocabulary Lookup
 
