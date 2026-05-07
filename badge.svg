@@ -7,15 +7,20 @@
   </g>
 
   <!-- Title -->
-  <text x="120" y="65" font-family="Arial, sans-serif" font-size="28" fill="white">
-    OpenGIS - EcoSpatial
+  <text x="120" y="58"
+        font-family="Arial, sans-serif"
+        font-size="26"
+        font-weight="bold"
+        fill="white">
+    English–Polish
   </text>
-
-  <!-- Trademark -->
-  <text x="515" y="40" font-family="Arial, sans-serif" font-size="14" fill="#9ca3af">™</text>
 
   <!-- Subtitle -->
-  <text x="120" y="90" font-family="Arial, sans-serif" font-size="14" fill="#9ca3af">
-    GIS & Spatial Management
+  <text x="120" y="88"
+        font-family="Arial, sans-serif"
+        font-size="18"
+        fill="#9ca3af">
+    Offline Vocabulary Lookup
   </text>
+
 </svg>
