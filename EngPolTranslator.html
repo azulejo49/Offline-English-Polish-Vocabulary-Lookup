@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A-Z Offline English-Polish Lookup</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            max-width: 900px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            background-color: #f0f2f5; 
+            color: #333; 
+        }
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .brand-container h1 { 
+            color: #1a365d; 
+            margin: 0;
+            font-size: 28px;
+        }
+        h2, h3 { color: #1a365d; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+        .panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        textarea, input[type="text"] { 
+            width: 100%; 
+            padding: 12px; 
+            margin-top: 8px; 
+            margin-bottom: 15px; 
+            border: 1px solid #cbd5e0; 
+            border-radius: 6px; 
+            box-sizing: border-box; 
+            font-size: 16px; 
+        }
+        button { 
+            background-color: #2b6cb0; 
+            color: white; 
+            border: none; 
+            padding: 12px 20px; 
+            font-size: 16px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            width: 100%; 
+            font-weight: bold; 
+        }
+        button:hover { background-color: #2c5282; }
+        .output-box { 
+            background-color: #ebf8ff; 
+            padding: 15px; 
+            border-left: 5px solid #3182ce; 
+            min-height: 80px; 
+            font-size: 18px; 
+            line-height: 1.5; 
+            border-radius: 0 6px 6px 0; 
+        }
+        .dictionary-list { 
+            height: 400px; 
+            overflow-y: auto; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 6px; 
+            background: #faf5ff; 
+        }
+        .dict-item { 
+            padding: 10px 15px; 
+            border-bottom: 1px solid #edf2f7; 
+            display: flex; 
+            justify-content: space-between; 
+        }
+        .dict-item:nth-child(even) { background-color: #fff; }
+        .eng-word { font-weight: bold; color: #2d3748; }
+        .pol-word { color: #4a5568; }
+        .file-upload { 
+            background: #edf2f7; 
+            padding: 15px; 
+            border-radius: 6px; 
+            margin-bottom: 20px; 
+            border: 1px dashed #a0aec0; 
+        }
+        .stats { font-size: 14px; color: #718096; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="brand-container">
+        <svg width="45" height="45" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+            <path fill="#2b6cb0" d="M255.563 22.094c-126.81 0-229.594 102.784-229.594 229.594 0 25.4 4.132 49.846 11.75 72.687 40.154-24.203 76.02-41.17 107.56-52.03-35.752 5.615-66.405 23.66-109.843 4 31.552-27.765 87.682-65.842 138.532-71.658 26.58-21.615 68.113-43.962 89.655-37.28 30.492-26.873 67.982-61.093 108.125-85.75 10.667 16.156 17.124 35.94 12.563 57.874-80.37 20.205-61.692 148.928 13.468 67.44 6.348 13.064 9.41 26.665 9.095 41.436-32.675 33.83-66.97 63.026-101.938 87.906.466 23.99-5.605 52.915-19 84.813-5.635 13.42-7.33 36.406 22.875 53.97 101.14-24.012 176.375-114.924 176.375-223.408 0-126.81-102.815-229.593-229.625-229.593zm3.312 164.375c-17.835 2.22-32.794 9.046-45.844 18.968 12.083-.036 25.612 2.882 37.5 6.156 6.208-6.698 10.236-18.52 8.345-25.125z"/>
+        </svg>
+        <h1>A-Z Offline Vocabulary Lookup</h1>
+    </div>
+
+    <div class="file-upload">
+        <h3 style="margin-top: 0;">Optional: Load Massive Dictionary File</h3>
+        <p style="font-size: 14px; margin-top: 0;">If you have a full dictionary JSON file, load it here entirely offline.</p>
+        <input type="file" id="fileInput" accept=".json">
+        <div class="stats" id="wordCount">Current vocabulary loaded: 0 words</div>
+    </div>
+
+    <div class="grid">
+        <div class="panel">
+            <h2 style="margin-top: 0;">Sentence Assembler</h2>
+            <p>Type English words. Missing words remain in [brackets].</p>
+            <textarea id="englishInput" rows="5" placeholder="e.g., The quick brown fox jumps over the lazy dog."></textarea>
+            <button onclick="translateSentence()">Assemble Polish Sentence</button>
+            
+            <h3 style="margin-top: 20px;">Polish Translation:</h3>
+            <div class="output-box" id="polishOutput">Translation will appear here...</div>
+        </div>
+
+        <div class="panel">
+            <h2 style="margin-top: 0;">A-Z Dictionary Viewer</h2>
+            <input type="text" id="searchInput" placeholder="Search for English or Polish word..." onkeyup="filterDictionary()">
+            <div class="dictionary-list" id="dictList">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        // Foundational A-Z Dictionary
+        let dictionary = {
+            "a": "jakiś", "ability": "zdolność", "able": "zdolny", "about": "o", "above": "powyżej", "accept": "akceptować", "accident": "wypadek", "action": "akcja", "add": "dodać", "after": "po", "again": "znowu", "against": "przeciwko", "age": "wiek", "air": "powietrze", "all": "wszystko", "almost": "prawie", "always": "zawsze", "and": "i", "animal": "zwierzę", "answer": "odpowiedź", "any": "jakikolwiek", "apple": "jabłko", "area": "obszar", "arm": "ramię", "around": "wokół", "art": "sztuka", "ask": "pytać", "at": "w/przy",
+            "back": "plecy/z powrotem", "bad": "zły", "bank": "bank", "base": "baza", "be": "być", "beautiful": "piękny", "because": "ponieważ", "become": "stawać się", "bed": "łóżko", "before": "przed", "begin": "zaczynać", "behind": "za", "believe": "wierzyć", "best": "najlepszy", "better": "lepszy", "between": "pomiędzy", "big": "duży", "bird": "ptak", "black": "czarny", "blood": "krew", "blue": "niebieski", "boat": "łódź", "body": "ciało", "book": "książka", "boy": "chłopiec", "break": "przerwa/łamać", "bring": "przynieść", "brother": "brat", "brown": "brązowy", "build": "budować", "but": "ale", "buy": "kupować", "by": "przez",
+            "call": "dzwonić", "can": "móc", "capital": "stolica", "car": "samochód", "care": "opieka", "carry": "nieść", "cat": "kot", "catch": "łapać", "cause": "powód", "center": "centrum", "certain": "pewny", "chance": "szansa", "change": "zmiana", "child": "dziecko", "choose": "wybierać", "city": "miasto", "class": "klasa", "clear": "jasny", "close": "blisko/zamykać", "cold": "zimny", "color": "kolor", "come": "przyjść", "common": "wspólny", "complete": "kompletny", "copy": "kopia", "cost": "koszt", "could": "mógł", "country": "kraj", "course": "kurs", "cover": "przykrywać", "cry": "płakać", "cut": "ciąć",
+            "dance": "taniec", "danger": "niebezpieczeństwo", "dark": "ciemny", "day": "dzień", "dead": "martwy", "deal": "umowa", "dear": "drogi", "decide": "decydować", "deep": "głęboki", "describe": "opisywać", "design": "projekt", "detail": "szczegół", "develop": "rozwijać", "die": "umierać", "difference": "różnica", "different": "inny", "difficult": "trudny", "direct": "bezpośredni", "discover": "odkrywać", "do": "robić", "doctor": "lekarz", "dog": "pies", "door": "drzwi", "down": "w dół", "draw": "rysować", "dream": "sen", "drive": "prowadzić", "drop": "upuszczać", "dry": "suchy",
+            "each": "każdy", "early": "wcześnie", "earth": "ziemia", "east": "wschód", "easy": "łatwy", "eat": "jeść", "edge": "krawędź", "education": "edukacja", "effect": "efekt", "effort": "wysiłek", "egg": "jajko", "eight": "osiem", "either": "albo", "empty": "pusty", "end": "koniec", "energy": "energia", "enjoy": "cieszyć się", "enough": "wystarczająco", "enter": "wchodzić", "equal": "równy", "especially": "zwłaszcza", "even": "nawet", "evening": "wieczór", "event": "wydarzenie", "ever": "kiedykolwiek", "every": "każdy", "exact": "dokładny", "example": "przykład", "expect": "oczekiwać", "experience": "doświadczenie", "explain": "wyjaśniać", "eye": "oko",
+            "face": "twarz", "fact": "fakt", "fair": "sprawiedliwy", "fall": "spadać", "family": "rodzina", "far": "daleko", "farm": "farma", "fast": "szybki", "fat": "gruby", "father": "ojciec", "fear": "strach", "feel": "czuć", "few": "kilka", "field": "pole", "fight": "walczyć", "figure": "figura", "fill": "wypełniać", "final": "końcowy", "find": "znaleźć", "fine": "w porządku", "finger": "palec", "finish": "kończyć", "fire": "ogień", "first": "pierwszy", "fish": "ryba", "fit": "pasować", "five": "pięć", "flat": "płaski", "floor": "podłoga", "flower": "kwiat", "fly": "latać", "follow": "podążać", "food": "jedzenie", "foot": "stopa", "for": "dla", "force": "siła", "forest": "las", "form": "forma", "forward": "naprzód", "four": "cztery", "free": "wolny", "friend": "przyjaciel", "from": "od", "front": "przód", "full": "pełny", "future": "przyszłość",
+            "game": "gra", "garden": "ogród", "gas": "gaz", "general": "ogólny", "get": "dostać", "girl": "dziewczyna", "give": "dać", "glass": "szkło", "go": "iść", "god": "bóg", "gold": "złoto", "good": "dobry", "govern": "rządzić", "grand": "wielki", "great": "świetny", "green": "zielony", "ground": "ziemia", "group": "grupa", "grow": "rosnąć", "guess": "zgadywać", "guide": "przewodnik", "gun": "pistolet",
+            "hair": "włosy", "half": "połowa", "hand": "dłoń", "happen": "zdarzyć się", "happy": "szczęśliwy", "hard": "twardy", "hat": "kapelusz", "have": "mieć", "he": "on", "head": "głowa", "health": "zdrowie", "hear": "słyszeć", "heart": "serce", "heat": "ciepło", "heavy": "ciężki", "help": "pomoc", "her": "jej", "here": "tutaj", "high": "wysoki", "history": "historia", "hit": "uderzać", "hold": "trzymać", "hole": "dziura", "home": "dom", "hope": "nadzieja", "horse": "koń", "hot": "gorący", "hour": "godzina", "house": "dom", "how": "jak", "huge": "ogromny", "human": "człowiek", "hundred": "sto", "hunt": "polować", "hurry": "spieszyć się",
+            "i": "ja", "ice": "lód", "idea": "pomysł", "if": "jeśli", "imagine": "wyobrażać sobie", "important": "ważny", "in": "w", "include": "zawierać", "increase": "zwiększać", "industry": "przemysł", "information": "informacja", "inside": "wewnątrz", "interest": "zainteresowanie", "into": "do", "iron": "żelazo", "is": "jest", "island": "wyspa", "it": "to", "its": "jego",
+            "job": "praca", "join": "dołączyć", "joy": "radość", "judge": "sędzia", "jump": "skakać", "just": "tylko",
+            "keep": "trzymać", "key": "klucz", "kill": "zabijać", "kind": "rodzaj", "king": "król", "kiss": "pocałunek", "kitchen": "kuchnia", "know": "wiedzieć",
+            "lady": "pani", "lake": "jezioro", "land": "ziemia", "language": "język", "large": "duży", "last": "ostatni", "late": "późno", "laugh": "śmiać się", "law": "prawo", "lay": "kłaść", "lazy": "leniwy", "lead": "prowadzić", "learn": "uczyć się", "leave": "zostawiać", "left": "lewy", "leg": "noga", "length": "długość", "less": "mniej", "let": "pozwalać", "letter": "list", "level": "poziom", "lie": "leżeć", "life": "życie", "light": "światło", "like": "lubić", "line": "linia", "list": "lista", "listen": "słuchać", "little": "mały", "live": "żyć", "local": "lokalny", "long": "długi", "look": "patrzeć", "lose": "gubić", "love": "miłość", "low": "niski",
+            "machine": "maszyna", "main": "główny", "make": "robić", "man": "mężczyzna", "many": "wiele", "map": "mapa", "mark": "znak", "market": "rynek", "mass": "masa", "master": "mistrz", "match": "mecz", "material": "materiał", "matter": "sprawa", "may": "móc", "me": "mnie", "mean": "znaczyć", "measure": "miara", "meat": "mięso", "meet": "spotykać", "middle": "środek", "might": "móc", "mile": "mila", "milk": "mleko", "mind": "umysł", "minute": "minuta", "miss": "tęsknić", "mix": "mieszać", "model": "model", "modern": "nowoczesny", "money": "pieniądze", "month": "miesiąc", "moon": "księżyc", "more": "więcej", "morning": "rano", "most": "najwięcej", "mother": "matka", "mountain": "góra", "mouse": "mysz", "mouth": "usta", "move": "ruszać", "much": "dużo", "music": "muzyka", "must": "musieć", "my": "mój",
+            "name": "imię", "nation": "naród", "nature": "natura", "near": "blisko", "necessary": "konieczny", "neck": "szyja", "need": "potrzebować", "neighbor": "sąsiad", "never": "nigdy", "new": "nowy", "next": "następny", "night": "noc", "nine": "dziewięć", "no": "nie", "noise": "hałas", "noon": "południe", "nor": "ani", "north": "północ", "nose": "nos", "not": "nie", "note": "notatka", "nothing": "nic", "notice": "zauważać", "noun": "rzeczownik", "now": "teraz", "number": "numer",
+            "object": "obiekt", "observe": "obserwować", "ocean": "ocean", "of": "z", "off": "wyłączony", "offer": "oferta", "office": "biuro", "often": "często", "oil": "olej", "old": "stary", "on": "na", "once": "raz", "one": "jeden", "only": "tylko", "open": "otwarty", "operate": "operować", "opposite": "przeciwny", "or": "lub", "orange": "pomarańczowy", "order": "zamówienie", "other": "inny", "our": "nasz", "out": "na zewnątrz", "outside": "na zewnątrz", "over": "ponad", "own": "własny",
+            "page": "strona", "pain": "ból", "paint": "malować", "paper": "papier", "parent": "rodzic", "part": "część", "party": "partia/przyjęcie", "pass": "mijać", "past": "przeszłość", "path": "ścieżka", "pay": "płacić", "peace": "pokój", "pen": "długopis", "people": "ludzie", "perfect": "idealny", "perhaps": "być może", "period": "okres", "person": "osoba", "picture": "zdjęcie", "piece": "kawałek", "place": "miejsce", "plain": "zwykły", "plan": "plan", "plane": "samolot", "plant": "roślina", "play": "grać", "please": "proszę", "point": "punkt", "poor": "biedny", "popular": "popularny", "position": "pozycja", "possible": "możliwy", "power": "moc", "practice": "praktyka", "prepare": "przygotować", "present": "obecny", "press": "naciskać", "price": "cena", "print": "drukować", "probable": "prawdopodobny", "problem": "problem", "produce": "produkować", "product": "produkt", "property": "własność", "prove": "udowadniać", "provide": "zapewniać", "public": "publiczny", "pull": "ciągnąć", "push": "pchać", "put": "kłaść",
+            "quality": "jakość", "question": "pytanie", "quick": "szybki", "quiet": "cichy", "quite": "całkiem",
+            "race": "wyścig", "radio": "radio", "rain": "deszcz", "raise": "podnosić", "reach": "osiągać", "read": "czytać", "ready": "gotowy", "real": "prawdziwy", "reason": "powód", "receive": "otrzymywać", "record": "zapis", "red": "czerwony", "region": "region", "remember": "pamiętać", "repeat": "powtarzać", "reply": "odpowiedź", "report": "raport", "represent": "reprezentować", "require": "wymagać", "rest": "odpoczynek", "result": "wynik", "return": "wracać", "rich": "bogaty", "ride": "jechać", "right": "prawy", "ring": "pierścionek", "river": "rzeka", "road": "droga", "rock": "skała", "roll": "toczyć", "room": "pokój", "root": "korzeń", "rope": "lina", "round": "okrągły", "rule": "zasada", "run": "biec",
+            "safe": "bezpieczny", "sail": "żeglować", "salt": "sól", "same": "taki sam", "sand": "piasek", "save": "ratować", "say": "mówić", "school": "szkoła", "science": "nauka", "sea": "morze", "season": "pora roku", "seat": "siedzenie", "second": "drugi", "see": "widzieć", "seem": "wydawać się", "sell": "sprzedawać", "send": "wysyłać", "sense": "sens", "serve": "służyć", "set": "zestaw", "seven": "siedem", "several": "kilka", "shape": "kształt", "share": "dzielić się", "sharp": "ostry", "she": "ona", "shine": "świecić", "ship": "statek", "shoe": "but", "shop": "sklep", "short": "krótki", "should": "powinien", "show": "pokazywać", "side": "strona", "sight": "wzrok", "sign": "znak", "silence": "cisza", "silver": "srebro", "similar": "podobny", "simple": "prosty", "since": "od", "sing": "śpiewać", "single": "pojedynczy", "sister": "siostra", "sit": "siedzieć", "six": "sześć", "size": "rozmiar", "skill": "umiejętność", "skin": "skóra", "sky": "niebo", "sleep": "spać", "slow": "wolny", "small": "mały", "smell": "zapach", "smile": "uśmiech", "snow": "śnieg", "so": "więc", "soft": "miękki", "soldier": "żołnierz", "some": "jakiś", "son": "syn", "song": "piosenka", "soon": "wkrótce", "sound": "dźwięk", "south": "południe", "space": "przestrzeń", "speak": "mówić", "special": "specjalny", "speed": "prędkość", "spell": "literować", "spend": "spędzać", "spite": "złość", "split": "dzielić", "sport": "sport", "spring": "wiosna", "square": "kwadrat", "stand": "stać", "star": "gwiazda", "start": "zaczynać", "state": "stan", "station": "stacja", "stay": "zostawać", "step": "krok", "stick": "patyk", "still": "wciąż", "stone": "kamień", "stop": "zatrzymać", "store": "sklep", "story": "historia", "straight": "prosty", "strange": "dziwny", "street": "ulica", "stretch": "rozciągać", "strike": "uderzać", "strong": "silny", "student": "student", "study": "nauka", "subject": "temat", "substance": "substancja", "success": "sukces", "such": "taki", "sudden": "nagły", "sugar": "cukier", "suggest": "sugerować", "suit": "garnitur", "summer": "lato", "sun": "słońce", "supply": "dostarczać", "support": "wsparcie", "sure": "pewny", "surface": "powierzchnia", "surprise": "niespodzianka", "sweet": "słodki", "swim": "pływać", "system": "system",
+            "table": "stół", "tail": "ogon", "take": "brać", "talk": "rozmawiać", "tall": "wysoki", "taste": "smak", "tax": "podatek", "teach": "uczyć", "team": "zespół", "tear": "łza", "tell": "powiedzieć", "temperature": "temperatura", "ten": "dziesięć", "term": "termin", "test": "test", "than": "niż", "that": "że", "the": "(ten/ta/to)", "then": "wtedy", "there": "tam", "therefore": "dlatego", "these": "te", "they": "oni", "thick": "gruby", "thin": "cienki", "thing": "rzecz", "think": "myśleć", "third": "trzeci", "this": "to", "those": "tamte", "though": "chociaż", "thought": "myśl", "thousand": "tysiąc", "three": "trzy", "through": "przez", "throw": "rzucać", "thus": "tak więc", "tie": "wiązać", "time": "czas", "to": "do", "today": "dzisiaj", "together": "razem", "too": "zbyt", "tool": "narzędzie", "top": "szczyt", "total": "całkowity", "touch": "dotyk", "toward": "w kierunku", "town": "miasto", "track": "ścieżka", "trade": "handel", "train": "pociąg", "travel": "podróż", "tree": "drzewo", "trouble": "problem", "true": "prawdziwy", "trust": "zaufanie", "try": "próbować", "turn": "obracać", "two": "dwa", "type": "typ",
+            "uncle": "wujek", "under": "pod", "understand": "rozumieć", "unit": "jednostka", "until": "aż do", "up": "w górę", "upon": "na", "use": "używać", "usual": "zwykły",
+            "valley": "dolina", "value": "wartość", "various": "różny", "very": "bardzo", "view": "widok", "village": "wioska", "visit": "wizyta", "voice": "głos",
+            "wait": "czekać", "walk": "spacer", "wall": "ściana", "want": "chcieć", "war": "wojna", "warm": "ciepły", "wash": "myć", "watch": "oglądać", "water": "woda", "wave": "fala", "way": "sposób", "we": "my", "wear": "nosić", "weather": "pogoda", "week": "tydzień", "weight": "waga", "well": "dobrze", "west": "zachód", "what": "co", "wheel": "koło", "when": "kiedy", "where": "gdzie", "whether": "czy", "which": "który", "while": "podczas", "white": "biały", "who": "kto", "whole": "cały", "whose": "czyj", "why": "dlaczego", "wide": "szeroki", "wife": "żona", "wild": "dziki", "will": "wola", "win": "wygrać", "wind": "wiatr", "window": "okno", "wing": "skrzydło", "winter": "zima", "wire": "drut", "wish": "życzenie", "with": "z", "without": "bez", "woman": "kobieta", "wonder": "cud", "wood": "drewno", "word": "słowo", "work": "praca", "world": "świat", "would": "byłby", "write": "pisać", "wrong": "zły",
+            "yard": "podwórko", "year": "rok", "yellow": "żółty", "yes": "tak", "yet": "jeszcze", "you": "ty", "young": "młody", "your": "twój",
+            "zebra": "zebra", "zero": "zero", "zoo": "zoo"
+        };
+
+        // UI Update Function
+        function updateWordCount() {
+            const count = Object.keys(dictionary).length;
+            document.getElementById('wordCount').innerText = `Current vocabulary loaded: ${count.toLocaleString()} words`;
+        }
+
+        // File Uploader Logic (Allows loading a massive JSON without crashing the HTML file)
+        document.getElementById('fileInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const newDict = JSON.parse(e.target.result);
+                    // Merge new dictionary with existing
+                    dictionary = { ...dictionary, ...newDict };
+                    updateWordCount();
+                    renderDictionary();
+                    alert("Dictionary successfully expanded!");
+                } catch (error) {
+                    alert("Error parsing JSON file. Please ensure it is a valid format.");
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        // Sentence Assembler Logic
+        function translateSentence() {
+            const input = document.getElementById('englishInput').value;
+            
+            // This regex separates words from punctuation, keeping punctuation intact
+            const tokens = input.match(/\b(\w+)\b|([^\w\s])/g) || [];
+            
+            const translatedTokens = tokens.map(token => {
+                // If it's punctuation, leave it alone
+                if (/^[^\w\s]$/.test(token)) {
+                    return token;
+                }
+                
+                const lowerWord = token.toLowerCase();
+                if (dictionary[lowerWord]) {
+                    // Try to preserve original capitalization if first letter was capital
+                    if (token[0] === token[0].toUpperCase()) {
+                        return dictionary[lowerWord].charAt(0).toUpperCase() + dictionary[lowerWord].slice(1);
+                    }
+                    return dictionary[lowerWord];
+                } else {
+                    return `[${token}]`; // Mark unknown words
+                }
+            });
+
+            // Reconstruct the sentence with correct spacing
+            let finalOutput = translatedTokens.join(' ').replace(/\s+([.,!?])/g, '$1');
+            document.getElementById('polishOutput').innerText = finalOutput;
+        }
+
+        // Dictionary Viewer Logic
+        function renderDictionary(filterText = "") {
+            const dictList = document.getElementById('dictList');
+            dictList.innerHTML = "";
+            
+            let count = 0;
+            for (const [eng, pol] of Object.entries(dictionary)) {
+                // Stop rendering after 300 to prevent browser lag on massive dicts during search
+                if (count > 300 && filterText === "") break; 
+
+                if (eng.includes(filterText.toLowerCase()) || pol.includes(filterText.toLowerCase())) {
+                    const div = document.createElement('div');
+                    div.className = 'dict-item';
+                    div.innerHTML = `<span class="eng-word">${eng}</span> <span class="pol-word">${pol}</span>`;
+                    dictList.appendChild(div);
+                    count++;
+                }
+            }
+        }
+
+        function filterDictionary() {
+            const searchText = document.getElementById('searchInput').value;
+            renderDictionary(searchText);
+        }
+
+        // Initial setup
+        updateWordCount();
+        renderDictionary();
+    </script>
+</body>
+</html>
